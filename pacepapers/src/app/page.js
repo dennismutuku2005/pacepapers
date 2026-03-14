@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Printer, 
@@ -24,16 +24,28 @@ export default function PacePapers() {
     customerPhone: '',
     amount: '',
     description: 'First payment after installation',
-    invoiceNumber: `INV-${Math.floor(100000 + Math.random() * 900000)}`,
+    invoiceNumber: 'INV-000000',
     date: new Date().toISOString().split('T')[0],
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     isStamped: true,
+    docType: 'Invoice', // 'Invoice' or 'Receipt'
+    verificationHash: '00000000-0000',
     terms: 'This is an electronically generated document. No signature is required.',
     policy: 'Payment is non-refundable once service is activated.'
   })
 
   const [isGenerating, setIsGenerating] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const invoiceRef = useRef(null)
+
+  useEffect(() => {
+    setMounted(true)
+    setFormData(prev => ({
+      ...prev,
+      invoiceNumber: `INV-${Math.floor(100000 + Math.random() * 900000)}`,
+      verificationHash: Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Math.random().toString(36).substring(2, 6).toUpperCase()
+    }))
+  }, [])
 
   const handlePrint = () => {
     window.print()
@@ -74,6 +86,21 @@ export default function PacePapers() {
             </h2>
             
             <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-bold text-[#6B7280] uppercase mb-1 block">Document Type</label>
+                <div className="flex bg-white border border-[#D1D5DB] rounded-lg p-1">
+                  {['Invoice', 'Receipt'].map(type => (
+                    <button
+                      key={type}
+                      onClick={() => setFormData(prev => ({ ...prev, docType: type }))}
+                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${formData.docType === type ? 'bg-pace-purple text-white shadow-sm' : 'text-[#6B7280] hover:bg-[#F9FAFB]'}`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div>
                 <label className="text-[11px] font-bold text-[#6B7280] uppercase mb-1 block">Customer Name</label>
                 <input 
@@ -123,7 +150,7 @@ export default function PacePapers() {
 
               <div className="flex items-center justify-between p-3 bg-white border border-[#E5E7EB] rounded-lg">
                 <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${formData.isStamped ? 'bg-pace-green' : 'bg-[#EF4444]'}`}></div>
+                  <div className={`w-2 h-2 rounded-full ${formData.isStamped ? 'bg-pace-green' : 'bg-[#9CA3AF]'}`}></div>
                   <span className="text-xs font-semibold text-[#374151]">Apply Official Stamp</span>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -198,7 +225,7 @@ export default function PacePapers() {
               </div>
 
               <div className="text-right space-y-1">
-                <h1 className="text-4xl font-black text-[#111827] tracking-tight mb-2">INVOICE</h1>
+                <h1 className="text-4xl font-black text-[#111827] tracking-tight mb-2 uppercase">{formData.docType}</h1>
                 <p className="text-xs text-[#6B7280] font-bold">#{formData.invoiceNumber}</p>
                 <p className="text-xs text-[#6B7280] font-bold">{new Date(formData.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
               </div>
@@ -272,13 +299,14 @@ export default function PacePapers() {
                 {formData.isStamped && (
                   <motion.div 
                     initial={{ scale: 2, opacity: 0, rotate: -20 }}
-                    animate={{ scale: 1, opacity: 1, rotate: -15 }}
-                    className="absolute -top-10 right-20 w-32 h-32 border-4 border-[#EF4444]/40 rounded-full flex flex-col items-center justify-center p-2 select-none pointer-events-none"
+                    animate={{ scale: 1, opacity: 0.8, rotate: -15 }}
+                    className="absolute -top-10 right-20 w-32 h-32 border-4 border-[#4B1D8F]/60 rounded-full flex flex-col items-center justify-center p-2 select-none pointer-events-none"
+                    style={{ filter: 'contrast(1.2) brightness(1.1) saturate(1.2)' }}
                   >
-                    <div className="text-[10px] font-black text-[#EF4444]/60 uppercase tracking-tighter">OFFICIAL STAMP</div>
-                    <div className="text-base font-black text-[#EF4444]/80 tracking-tighter leading-none my-0.5">PACE WISP</div>
-                    <div className="text-[8px] font-bold text-[#EF4444]/60">{formData.date}</div>
-                    <div className="absolute inset-0 border-t-4 border-[#EF4444]/20 rotate-45 scale-[1.2]"></div>
+                    <div className="text-[10px] font-black text-[#4B1D8F]/70 uppercase tracking-tighter">OFFICIAL STAMP</div>
+                    <div className="text-base font-black text-[#4B1D8F] tracking-tighter leading-none my-0.5">PACE WISP</div>
+                    <div className="text-[8px] font-bold text-[#4B1D8F]/70">{formData.date}</div>
+                    <div className="absolute inset-0 border-t-4 border-[#4B1D8F]/20 rotate-45 scale-[1.2]"></div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -293,11 +321,13 @@ export default function PacePapers() {
                 </p>
               </div>
               <div className="flex justify-between items-center opacity-60">
-                <p className="text-[9px] font-medium text-[#9CA3AF]">Generated by PacePapers Systems © {new Date().getFullYear()}</p>
-                <div className="flex gap-4">
-                  <div className="w-8 h-8 rounded bg-[#F3F4F6]"></div>
-                  <div className="w-8 h-8 rounded bg-[#F3F4F6]"></div>
-                  <div className="w-8 h-8 rounded bg-[#F3F4F6]"></div>
+                <p className="text-[9px] font-medium text-[#9CA3AF]">
+                  Generated by PacePapers Systems • VERIFY: <span className="font-mono font-bold">{formData.verificationHash}</span>
+                </p>
+                <div className="flex gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#D1D5DB]"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#D1D5DB]"></div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#D1D5DB]"></div>
                 </div>
               </div>
             </div>
