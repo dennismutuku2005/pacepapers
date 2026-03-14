@@ -13,9 +13,12 @@ import {
   Settings,
   Image as ImageIcon,
   History,
-  LayoutDashboard
+  LayoutDashboard,
+  Loader2
 } from 'lucide-react'
 import Image from 'next/image'
+import * as htmlToImage from 'html-to-image'
+import { jsPDF } from 'jspdf'
 
 export default function PacePapers() {
   const [formData, setFormData] = useState({
@@ -64,14 +67,43 @@ export default function PacePapers() {
     }))
   }
 
+  const handleDownloadPDF = async () => {
+    if (!invoiceRef.current) return
+    setIsGenerating(true)
+    
+    try {
+      const element = invoiceRef.current
+      
+      // Use html-to-image which is better at handling modern CSS like Lab/Oklch colors
+      const dataUrl = await htmlToImage.toPng(element, {
+        quality: 1.0,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff',
+      })
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [element.offsetWidth * 1.5, element.offsetHeight * 1.5]
+      })
+      
+      pdf.addImage(dataUrl, 'PNG', 0, 0, element.offsetWidth * 1.5, element.offsetHeight * 1.5)
+      pdf.save(`${formData.docType}-${formData.invoiceNumber}.pdf`)
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-white text-[#111827] flex flex-col md:flex-row h-screen overflow-hidden print:bg-white print:p-0">
       {/* Sidebar / Form Section */}
       <div className="w-full md:w-[400px] bg-[#F9FAFB] border-r border-[#E5E7EB] flex flex-col h-full print:hidden">
         <div className="p-6 border-b border-[#E5E7EB] flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-pace-purple rounded-xl flex items-center justify-center text-white font-bold text-xl">
-              P
+            <div className="w-10 h-10 transition-transform hover:scale-110">
+              <img src="/logoc.png" alt="Pace" className="w-full h-full object-contain" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-pace-purple leading-tight">PacePapers</h1>
@@ -198,7 +230,7 @@ export default function PacePapers() {
           </div>
 
           <div className="space-y-4 pt-4 border-t border-[#E5E7EB]">
-            <h2 className="text-sm font-black text-[#374151] flex items-center gap-2 uppercase tracking-tight">
+            <h2 className="text-sm font-bold text-[#374151] flex items-center gap-2 uppercase tracking-tight">
               <Settings className="w-4 h-4 text-pace-purple" />
               Payment Details
             </h2>
@@ -211,7 +243,7 @@ export default function PacePapers() {
                     <button
                       key={m}
                       onClick={() => setFormData(prev => ({ ...prev, paymentMethod: m }))}
-                      className={`py-1.5 text-[10px] font-black rounded-md transition-all ${formData.paymentMethod === m ? 'bg-pace-purple text-white' : 'text-[#6B7280] hover:bg-[#F9FAFB]'}`}
+                      className={`py-1.5 text-[10px] font-bold rounded-md transition-all ${formData.paymentMethod === m ? 'bg-pace-purple text-white' : 'text-[#6B7280] hover:bg-[#F9FAFB]'}`}
                     >
                       {m}
                     </button>
@@ -274,7 +306,7 @@ export default function PacePapers() {
           </div>
 
           <div className="space-y-4 pt-4 border-t border-[#E5E7EB]">
-            <h2 className="text-sm font-black text-[#374151] flex items-center gap-2 uppercase tracking-tight">
+            <h2 className="text-sm font-bold text-[#374151] flex items-center gap-2 uppercase tracking-tight">
               <History className="w-4 h-4 text-pace-purple" />
               Quick Presets
             </h2>
@@ -283,7 +315,7 @@ export default function PacePapers() {
                 <button 
                   key={preset}
                   onClick={() => setFormData(p => ({...p, description: `${preset} Payment`}))}
-                  className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[10px] font-black text-[#4B5563] hover:border-pace-purple hover:text-pace-purple transition-all text-left uppercase"
+                  className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[10px] font-bold text-[#4B5563] hover:border-pace-purple hover:text-pace-purple transition-all text-left uppercase"
                 >
                   {preset}
                 </button>
@@ -300,52 +332,65 @@ export default function PacePapers() {
             <Printer className="w-4 h-4" />
             Print Receipt
           </button>
-          <button className="w-full bg-white border border-[#E5E7EB] text-[#4B5563] rounded-xl py-3 font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#F9FAFB] transition-all">
-            <Download className="w-4 h-4" />
-            Save as Draft
+          <button 
+            onClick={handleDownloadPDF}
+            disabled={isGenerating}
+            className="w-full bg-white border border-[#E5E7EB] text-[#4B5563] rounded-xl py-3 font-bold text-sm flex items-center justify-center gap-2 hover:bg-[#F9FAFB] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isGenerating ? (
+              <Loader2 className="w-4 h-4 animate-spin text-pace-purple" />
+            ) : (
+              <Download className="w-4 h-4 text-pace-purple" />
+            )}
+            {isGenerating ? 'Generating...' : 'Download PDF'}
           </button>
         </div>
       </div>
 
       {/* Preview Section */}
-      <div className="flex-1 bg-[#F3F4F6] overflow-y-auto flex items-center justify-center p-4 md:p-12 print:p-0 print:bg-white">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-[800px] bg-white shadow-2xl rounded-none md:rounded-2xl overflow-hidden print:shadow-none print:w-full print:max-w-none"
-        >
-          {/* Invoice Canvas */}
-          <div id="invoice-paper" className="p-10 md:p-16 space-y-10 min-h-[900px] flex flex-col">
-            {/* Header */}
-            <div className="flex justify-between items-start">
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 transition-all hover:scale-105 duration-500">
-                    <img src="/logo.png" alt="Pace" className="w-full h-full object-contain" />
-                  </div>
-                  <div>
-                    <h2 className="text-3xl font-black text-pace-purple tracking-tighter font-figtree uppercase leading-none">PACE WISP</h2>
-                    <p className="text-[11px] text-[#4B5563] uppercase tracking-[0.25em] font-black">FAST • RELIABLE • UNLIMITED</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="text-right space-y-1">
-                <h1 className="text-4xl font-black text-[#111827] tracking-tight mb-2 uppercase">{formData.docType}</h1>
-                <p className="text-xs text-[#6B7280] font-bold">#{formData.invoiceNumber}</p>
-                <p className="text-xs text-[#6B7280] font-bold">{new Date(formData.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
-              </div>
-            </div>
-
-            {/* Address Grid */}
-            <div className="grid grid-cols-2 gap-12 pt-10 border-t border-[#F3F4F6]">
+      <div className="flex-1 bg-[#F3F4F6] overflow-hidden flex items-center justify-center p-4 md:p-8 print:p-0 print:bg-white relative">
+        <div className="absolute top-4 right-4 bg-white/50 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold text-[#6B7280] z-10 border border-[#E5E7EB] print:hidden">
+          Live Preview • Auto-Scaling
+        </div>
+        
+        <div className="w-full h-full flex items-center justify-center overflow-auto print:overflow-visible custom-scrollbar">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="origin-top my-auto print:scale-100 print:transform-none"
+            style={{ 
+              transform: 'scale(0.85)',
+              transformOrigin: 'center top'
+            }}
+          >
+            <div 
+              className="w-[560px] bg-white shadow-2xl rounded-none md:rounded-lg overflow-hidden print:shadow-none print:w-full print:max-w-none"
+            >
+              {/* Invoice Canvas */}
+              <div ref={invoiceRef} id="invoice-paper" className="p-8 space-y-4 min-h-[792px] flex flex-col bg-white">
+            {/* Header / Issued By Section */}
+            <div className="flex justify-between items-start pt-6 border-b border-[#F3F4F6] pb-10">
               <div className="space-y-4">
                 <h3 className="text-[11px] font-black text-[#9CA3AF] uppercase tracking-widest font-figtree mb-2">Issued By</h3>
-                <div className="space-y-0.5 text-sm">
-                  <p className="font-black text-[#111827] text-xl">Pace Wisp</p>
-                  <p className="text-pace-purple font-black text-xs pt-1 uppercase tracking-tight">Digital Services Provider</p>
-                  <p className="text-[#374151] font-black text-sm pt-2">Contact: 07...</p>
+                <div className="space-y-2">
+                  <div className="w-24 h-10">
+                    <img src="/logoc.png" alt="Pace Wisp" className="w-full h-full object-contain object-left" />
+                  </div>
+                  <div className="space-y-0.5 text-[11px]">
+                    <p className="text-pace-purple font-black uppercase tracking-tight">Digital Services Provider</p>
+                    <p className="text-[#374151] font-bold">Contact: 0741390949</p>
+                  </div>
                 </div>
+              </div>
+              <div className="text-right space-y-1">
+                <h1 className="text-2xl font-black text-[#111827] tracking-tight mb-1 uppercase">{formData.docType}</h1>
+                <p className="text-[10px] text-[#6B7280] font-bold">#{formData.invoiceNumber}</p>
+                <p className="text-[10px] text-[#6B7280] font-bold">{new Date(formData.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-12 mt-12">
+              <div className="space-y-4">
+                {/* Empty left side to balance Bill To */}
               </div>
               <div className="space-y-4">
                 <h3 className="text-[10px] font-black text-[#9CA3AF] uppercase tracking-widest text-right font-figtree mb-2">Bill To</h3>
@@ -381,29 +426,29 @@ export default function PacePapers() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-6">
-                  <div className="p-4 bg-[#F9FAFB] rounded-xl print:bg-[#F9FAFB] border border-[#E5E7EB]">
+                  <div className="py-2">
                     <p className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-widest mb-1">Payment Method</p>
                     <div className="space-y-0.5">
-                      <p className="text-xs font-black text-pace-purple truncate">
-                        {formData.paymentMethod === 'Paybill' && `PB: ${formData.paybillNumber}`}
-                        {formData.paymentMethod === 'Till' && `Till: ${formData.tillNumber}`}
-                        {formData.paymentMethod === 'Mobile' && `Mob: ${formData.mobileNumber}`}
+                      <p className="text-xs font-bold text-[#111827]">
+                        {formData.paymentMethod === 'Paybill' && `MPESA Paybill: ${formData.paybillNumber}`}
+                        {formData.paymentMethod === 'Till' && `MPESA Till: ${formData.tillNumber}`}
+                        {formData.paymentMethod === 'Mobile' && `Mobile: ${formData.mobileNumber}`}
                       </p>
                       {formData.paymentMethod === 'Paybill' && formData.accountNumber && (
-                        <p className="text-[10px] font-black text-[#374151]">Acc: {formData.accountNumber}</p>
+                        <p className="text-[10px] font-bold text-[#4B5563]">Account No: {formData.accountNumber}</p>
                       )}
                     </div>
                   </div>
-                  <div className="p-4 bg-[#F9FAFB] rounded-xl print:bg-[#F9FAFB] border border-[#E5E7EB]">
+                  <div className="py-2">
                     <p className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-widest mb-1">Status</p>
-                    <p className="text-xs font-black text-pace-green flex items-center gap-1.5 uppercase transition-all">
+                    <p className="text-[11px] font-bold text-pace-green flex items-center gap-1.5 uppercase transition-all">
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      Verified
+                      Verified & Paid
                     </p>
                   </div>
-                  <div className="p-4 bg-[#F9FAFB] rounded-xl print:bg-[#F9FAFB] border border-[#E5E7EB]">
+                  <div className="py-2">
                     <p className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-widest mb-1">Due Date</p>
-                    <p className="text-xs font-black text-[#111827]">{new Date(formData.dueDate).toLocaleDateString()}</p>
+                    <p className="text-[11px] font-bold text-[#111827]">{new Date(formData.dueDate).toLocaleDateString()}</p>
                   </div>
                 </div>
               </div>
@@ -429,34 +474,31 @@ export default function PacePapers() {
             </div>
 
             {/* Footer */}
-            <div className="pt-10 border-t border-[#F3F4F6] space-y-4">
-              <div className="bg-pace-purple/[0.03] p-6 rounded-2xl print:bg-[#F4F0FF] border-l-4 border-pace-purple">
-                <p className="text-[12px] font-black text-pace-purple mb-1 uppercase tracking-wider">Terms and Policy:</p>
-                <p className="text-[11px] text-[#111827] font-black leading-relaxed opacity-80">
+            <div className="pt-6 border-t border-[#F3F4F6] mt-auto">
+              <div className="pt-4 border-t border-[#F3F4F6]">
+                <p className="text-[9px] font-bold text-[#6B7280] mb-0.5 uppercase tracking-wider">Terms and Policy:</p>
+                <p className="text-[9px] text-[#9CA3AF] leading-snug italic">
                   {formData.terms} {formData.policy}
                 </p>
               </div>
-              <div className="flex justify-between items-center opacity-60">
-                <p className="text-[9px] font-medium text-[#9CA3AF]">
-                  Generated by PacePapers Systems • VERIFY: <span className="font-mono font-bold">{formData.verificationHash}</span>
+              <div className="flex justify-between items-center opacity-60 mt-4">
+                <p className="text-[8px] font-medium text-[#9CA3AF]">
+                  PacePapers Systems • VERIFY: <span className="font-mono font-bold">{formData.verificationHash}</span>
                 </p>
-                <div className="flex gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#D1D5DB]"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#D1D5DB]"></div>
-                  <div className="w-1.5 h-1.5 rounded-full bg-[#D1D5DB]"></div>
-                </div>
               </div>
             </div>
-          </div>
-        </motion.div>
-      </div>
+          </div> {/* Close Canvas 330 */}
+        </div> {/* Close Shadow Container 326 */}
+      </motion.div> {/* Close Scale Container 317 */}
+    </div> {/* Close Viewport Container 316 */}
+  </div> {/* Close Preview Section 311 */}
 
       <style jsx global>{`
         @media print {
           body {
             background: white !important;
           }
-          .print\\:hidden {
+          .print:hidden {
             display: none !important;
           }
           #invoice-paper {
@@ -464,7 +506,7 @@ export default function PacePapers() {
             margin: 0 !important;
             min-height: auto !important;
           }
-          .md\\:rounded-2xl {
+          .md:rounded-2xl {
             border-radius: 0 !important;
           }
           .shadow-2xl {
