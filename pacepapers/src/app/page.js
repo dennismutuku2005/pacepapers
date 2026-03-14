@@ -29,6 +29,11 @@ export default function PacePapers() {
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     isStamped: true,
     docType: 'Invoice', // 'Invoice' or 'Receipt'
+    paymentMethod: 'Paybill', // 'Mobile', 'Till', 'Paybill'
+    paybillNumber: '400200',
+    accountNumber: '',
+    tillNumber: '',
+    mobileNumber: '',
     verificationHash: '00000000-0000',
     terms: 'This is an electronically generated document. No signature is required.',
     policy: 'Payment is non-refundable once service is activated.'
@@ -93,7 +98,7 @@ export default function PacePapers() {
                     <button
                       key={type}
                       onClick={() => setFormData(prev => ({ ...prev, docType: type }))}
-                      className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${formData.docType === type ? 'bg-pace-purple text-white shadow-sm' : 'text-[#6B7280] hover:bg-[#F9FAFB]'}`}
+                      className={`flex-1 py-1.5 text-xs font-black rounded-md transition-all ${formData.docType === type ? 'bg-pace-purple text-white shadow-md' : 'text-[#6B7280] hover:bg-[#F9FAFB]'}`}
                     >
                       {type}
                     </button>
@@ -111,6 +116,31 @@ export default function PacePapers() {
                   placeholder="Enter name"
                   className="w-full bg-white border border-[#D1D5DB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pace-purple/20 focus:border-pace-purple transition-all"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-bold text-[#6B7280] uppercase mb-1 block">Phone Number</label>
+                  <input 
+                    type="text" 
+                    name="customerPhone"
+                    value={formData.customerPhone}
+                    onChange={handleInputChange}
+                    placeholder="07..."
+                    className="w-full bg-white border border-[#D1D5DB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pace-purple/20 focus:border-pace-purple transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-[#6B7280] uppercase mb-1 block">Customer Email</label>
+                  <input 
+                    type="email" 
+                    name="customerEmail"
+                    value={formData.customerEmail}
+                    onChange={handleInputChange}
+                    placeholder="Optional"
+                    className="w-full bg-white border border-[#D1D5DB] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-pace-purple/20 focus:border-pace-purple transition-all"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -168,7 +198,83 @@ export default function PacePapers() {
           </div>
 
           <div className="space-y-4 pt-4 border-t border-[#E5E7EB]">
-            <h2 className="text-sm font-bold text-[#374151] flex items-center gap-2">
+            <h2 className="text-sm font-black text-[#374151] flex items-center gap-2 uppercase tracking-tight">
+              <Settings className="w-4 h-4 text-pace-purple" />
+              Payment Details
+            </h2>
+            
+            <div className="space-y-3">
+              <div>
+                <label className="text-[11px] font-black text-[#6B7280] uppercase mb-1 block">Method</label>
+                <div className="grid grid-cols-3 gap-1 bg-white border border-[#D1D5DB] rounded-lg p-1">
+                  {['Paybill', 'Till', 'Mobile'].map(m => (
+                    <button
+                      key={m}
+                      onClick={() => setFormData(prev => ({ ...prev, paymentMethod: m }))}
+                      className={`py-1.5 text-[10px] font-black rounded-md transition-all ${formData.paymentMethod === m ? 'bg-pace-purple text-white' : 'text-[#6B7280] hover:bg-[#F9FAFB]'}`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {formData.paymentMethod === 'Paybill' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[11px] font-black text-[#6B7280] uppercase mb-1 block">Paybill</label>
+                    <input 
+                      type="text" 
+                      name="paybillNumber"
+                      value={formData.paybillNumber}
+                      onChange={handleInputChange}
+                      className="w-full bg-white border border-[#D1D5DB] rounded-lg px-3 py-2 text-sm font-black focus:outline-none focus:border-pace-purple"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[11px] font-black text-[#6B7280] uppercase mb-1 block">Account No</label>
+                    <input 
+                      type="text" 
+                      name="accountNumber"
+                      value={formData.accountNumber}
+                      onChange={handleInputChange}
+                      placeholder="e.g PACE"
+                      className="w-full bg-white border border-[#D1D5DB] rounded-lg px-3 py-2 text-sm font-black focus:outline-none focus:border-pace-purple"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {formData.paymentMethod === 'Till' && (
+                <div>
+                  <label className="text-[11px] font-black text-[#6B7280] uppercase mb-1 block">Till Number</label>
+                  <input 
+                    type="text" 
+                    name="tillNumber"
+                    value={formData.tillNumber}
+                    onChange={handleInputChange}
+                    className="w-full bg-white border border-[#D1D5DB] rounded-lg px-3 py-2 text-sm font-black focus:outline-none focus:border-pace-purple"
+                  />
+                </div>
+              )}
+
+              {formData.paymentMethod === 'Mobile' && (
+                <div>
+                  <label className="text-[11px] font-black text-[#6B7280] uppercase mb-1 block">Mobile Number</label>
+                  <input 
+                    type="text" 
+                    name="mobileNumber"
+                    value={formData.mobileNumber}
+                    onChange={handleInputChange}
+                    className="w-full bg-white border border-[#D1D5DB] rounded-lg px-3 py-2 text-sm font-black focus:outline-none focus:border-pace-purple"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-4 border-t border-[#E5E7EB]">
+            <h2 className="text-sm font-black text-[#374151] flex items-center gap-2 uppercase tracking-tight">
               <History className="w-4 h-4 text-pace-purple" />
               Quick Presets
             </h2>
@@ -177,7 +283,7 @@ export default function PacePapers() {
                 <button 
                   key={preset}
                   onClick={() => setFormData(p => ({...p, description: `${preset} Payment`}))}
-                  className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-lg text-xs font-medium text-[#4B5563] hover:border-pace-purple hover:text-pace-purple transition-all text-left"
+                  className="px-3 py-2 bg-white border border-[#E5E7EB] rounded-lg text-[10px] font-black text-[#4B5563] hover:border-pace-purple hover:text-pace-purple transition-all text-left uppercase"
                 >
                   {preset}
                 </button>
@@ -214,12 +320,12 @@ export default function PacePapers() {
             <div className="flex justify-between items-start">
               <div className="space-y-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-pace-purple rounded-2xl flex items-center justify-center">
-                    <img src="/logo.png" alt="Pace" className="w-10 h-10 object-contain brightness-0 invert" />
+                  <div className="w-20 h-20 transition-all hover:scale-105 duration-500">
+                    <img src="/logo.png" alt="Pace" className="w-full h-full object-contain" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-black text-pace-purple tracking-tighter">PACE WISP</h2>
-                    <p className="text-[10px] text-[#6B7280] uppercase tracking-[0.2em] font-bold">Fast. Reliable. Unlimited.</p>
+                    <h2 className="text-3xl font-black text-pace-purple tracking-tighter font-figtree uppercase leading-none">PACE WISP</h2>
+                    <p className="text-[11px] text-[#4B5563] uppercase tracking-[0.25em] font-black">FAST • RELIABLE • UNLIMITED</p>
                   </div>
                 </div>
               </div>
@@ -234,20 +340,21 @@ export default function PacePapers() {
             {/* Address Grid */}
             <div className="grid grid-cols-2 gap-12 pt-10 border-t border-[#F3F4F6]">
               <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-[#9CA3AF] uppercase tracking-widest">From</h3>
-                <div className="space-y-1 text-sm">
-                  <p className="font-bold text-[#111827]">Pace Wisp Networks</p>
-                  <p className="text-[#6B7280]">123 Network Plaza, Suite 400</p>
-                  <p className="text-[#6B7280]">Nairobi, Kenya</p>
-                  <p className="text-[#6B7280] font-semibold pt-1">billing@pacewisp.com</p>
+                <h3 className="text-[11px] font-black text-[#9CA3AF] uppercase tracking-widest font-figtree mb-2">Issued By</h3>
+                <div className="space-y-0.5 text-sm">
+                  <p className="font-black text-[#111827] text-xl">Pace Wisp</p>
+                  <p className="text-pace-purple font-black text-xs pt-1 uppercase tracking-tight">Digital Services Provider</p>
+                  <p className="text-[#374151] font-black text-sm pt-2">Contact: 07...</p>
                 </div>
               </div>
               <div className="space-y-4">
-                <h3 className="text-[10px] font-black text-[#9CA3AF] uppercase tracking-widest text-right">Bill To</h3>
-                <div className="space-y-1 text-sm text-right">
-                  <p className="font-bold text-[#111827]">{formData.customerName || 'Customer Name'}</p>
-                  <p className="text-[#6B7280] italic">{formData.customerEmail || 'No email provided'}</p>
-                  <p className="text-[#6B7280]">{formData.customerPhone || 'No phone provided'}</p>
+                <h3 className="text-[10px] font-black text-[#9CA3AF] uppercase tracking-widest text-right font-figtree mb-2">Bill To</h3>
+                <div className="space-y-0.5 text-sm text-right">
+                  <p className="font-extrabold text-[#111827] text-lg leading-tight">{formData.customerName || 'Walking Customer'}</p>
+                  <p className="text-[#374151] font-black">{formData.customerPhone || 'Mobile: Not provided'}</p>
+                  {formData.customerEmail && (
+                    <p className="text-[#6B7280] text-xs font-bold italic">{formData.customerEmail}</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -274,20 +381,29 @@ export default function PacePapers() {
                 </div>
 
                 <div className="grid grid-cols-3 gap-6">
-                  <div className="p-4 bg-[#F9FAFB] rounded-xl print:bg-[#F9FAFB]">
+                  <div className="p-4 bg-[#F9FAFB] rounded-xl print:bg-[#F9FAFB] border border-[#E5E7EB]">
+                    <p className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-widest mb-1">Payment Method</p>
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-black text-pace-purple truncate">
+                        {formData.paymentMethod === 'Paybill' && `PB: ${formData.paybillNumber}`}
+                        {formData.paymentMethod === 'Till' && `Till: ${formData.tillNumber}`}
+                        {formData.paymentMethod === 'Mobile' && `Mob: ${formData.mobileNumber}`}
+                      </p>
+                      {formData.paymentMethod === 'Paybill' && formData.accountNumber && (
+                        <p className="text-[10px] font-black text-[#374151]">Acc: {formData.accountNumber}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="p-4 bg-[#F9FAFB] rounded-xl print:bg-[#F9FAFB] border border-[#E5E7EB]">
                     <p className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-widest mb-1">Status</p>
-                    <p className="text-xs font-bold text-pace-green flex items-center gap-1.5">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Paid & Verified
+                    <p className="text-xs font-black text-pace-green flex items-center gap-1.5 uppercase transition-all">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Verified
                     </p>
                   </div>
-                  <div className="p-4 bg-[#F9FAFB] rounded-xl print:bg-[#F9FAFB]">
-                    <p className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-widest mb-1">Service Type</p>
-                    <p className="text-xs font-bold text-[#374151]">Unlimited Fiber</p>
-                  </div>
-                  <div className="p-4 bg-[#F9FAFB] rounded-xl print:bg-[#F9FAFB]">
+                  <div className="p-4 bg-[#F9FAFB] rounded-xl print:bg-[#F9FAFB] border border-[#E5E7EB]">
                     <p className="text-[9px] font-black text-[#9CA3AF] uppercase tracking-widest mb-1">Due Date</p>
-                    <p className="text-xs font-bold text-[#374151]">{new Date(formData.dueDate).toLocaleDateString()}</p>
+                    <p className="text-xs font-black text-[#111827]">{new Date(formData.dueDate).toLocaleDateString()}</p>
                   </div>
                 </div>
               </div>
@@ -299,14 +415,14 @@ export default function PacePapers() {
                 {formData.isStamped && (
                   <motion.div 
                     initial={{ scale: 2, opacity: 0, rotate: -20 }}
-                    animate={{ scale: 1, opacity: 0.8, rotate: -15 }}
-                    className="absolute -top-10 right-20 w-32 h-32 border-4 border-[#4B1D8F]/60 rounded-full flex flex-col items-center justify-center p-2 select-none pointer-events-none"
+                    animate={{ scale: 1, opacity: 0.9, rotate: -15 }}
+                    className="absolute -top-10 right-20 w-32 h-32 border-4 border-[#86198f]/60 rounded-full flex flex-col items-center justify-center p-2 select-none pointer-events-none"
                     style={{ filter: 'contrast(1.2) brightness(1.1) saturate(1.2)' }}
                   >
-                    <div className="text-[10px] font-black text-[#4B1D8F]/70 uppercase tracking-tighter">OFFICIAL STAMP</div>
-                    <div className="text-base font-black text-[#4B1D8F] tracking-tighter leading-none my-0.5">PACE WISP</div>
-                    <div className="text-[8px] font-bold text-[#4B1D8F]/70">{formData.date}</div>
-                    <div className="absolute inset-0 border-t-4 border-[#4B1D8F]/20 rotate-45 scale-[1.2]"></div>
+                    <div className="text-[10px] font-black text-[#86198f]/70 uppercase tracking-tighter">OFFICIAL STAMP</div>
+                    <div className="text-base font-black text-[#86198f] tracking-tighter leading-none my-0.5">PACE WISP</div>
+                    <div className="text-[8px] font-bold text-[#86198f]/70">{formData.date}</div>
+                    <div className="absolute inset-0 border-t-4 border-[#86198f]/20 rotate-45 scale-[1.2]"></div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -314,9 +430,9 @@ export default function PacePapers() {
 
             {/* Footer */}
             <div className="pt-10 border-t border-[#F3F4F6] space-y-4">
-              <div className="bg-pace-purple/5 p-4 rounded-xl print:bg-[#F4F0FF]">
-                <p className="text-[11px] font-bold text-pace-purple mb-1">Terms and Policy:</p>
-                <p className="text-[10px] text-[#4B5563] leading-relaxed">
+              <div className="bg-pace-purple/[0.03] p-6 rounded-2xl print:bg-[#F4F0FF] border-l-4 border-pace-purple">
+                <p className="text-[12px] font-black text-pace-purple mb-1 uppercase tracking-wider">Terms and Policy:</p>
+                <p className="text-[11px] text-[#111827] font-black leading-relaxed opacity-80">
                   {formData.terms} {formData.policy}
                 </p>
               </div>
